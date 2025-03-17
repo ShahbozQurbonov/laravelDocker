@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+    app:
+        image: php:8.2-fpm
+        container_name: laravel_app
+        restart: always
+        working_dir: /var/www
+        volumes:
+            - .:/var/www
+
+    webserver:
+        image: nginx:alpine
+        container_name: laravel_nginx
+        restart: always
+        ports:
+            - "8080:80"
+        volumes:
+            - .:/var/www
+            - ./nginx:/etc/nginx/conf.d
+
+    db:
+        image: postgres:latest
+        container_name: laravel_postgres
+        restart: always
+        environment:
+            POSTGRES_DB: TestShahboz
+            POSTGRES_USER: qurbonov
+            POSTGRES_PASSWORD: 04qurbonov4002
+        ports:
+            - "5433:5432"  # Tizimingizda 5433, Docker ichida 5432
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+volumes:
+    postgres_data:
