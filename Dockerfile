@@ -1,19 +1,42 @@
-# PHP 8.1 FPM bilan konteyner yaratamiz
-FROM php:8.1-fpm
+# PHP 8.2 bilan konteyner yaratish
+FROM php:8.2-fpm
 
-# Ishchi papkani o'rnatamiz
+# Ish katalogini o‘rnatish
 WORKDIR /var/www/html
 
-# Composer va kerakli kutubxonalarni o'rnatamiz
+# Zarur paketlarni o‘rnatish
 RUN apt-get update && apt-get install -y \
-    zip unzip git curl libpng-dev libonig-dev libxml2-dev \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+    git \
+    unzip \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    curl
 
-# Composerni o'rnatamiz
+# PHP kengaytmalarini o‘rnatish
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Composer’ni yuklash
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Laravel loyihasini tayyorlash uchun ruxsatlarni beramiz
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
+# Loyiha fayllarini konteyner ichiga ko‘chirish
+COPY . .
 
+# Git uchun xavfsiz papka sifatida belgilash 🔥
+RUN git config --global --add safe.directory /var/www/html
+
+# Ruxsat berish
+RUN chown -R www-data:www-data /var/www/html
+
+# 🚀 Laravel sozlamalarini avtomatik bajarish
+RUN composer install && \
+    cp .env.example .env && \
+    php artisan key:generate && \
+    php artisan migrate --force && \
+    php artisan config:clear && \
+    php artisan route:clear && \
+    php artisan view:clear
+
+# PHP-FPM ishga tushirish
 CMD ["php-fpm"]
